@@ -1,33 +1,36 @@
 # AGY OpenAPI
 
+> REST API wrapper untuk **AGY CLI** (Antigravity / Gemini) dan **Claude CLI** — terinspirasi dari [Waha](https://waha.devlike.pro/).  
+> Percakapan berbasis sesi, upload file, webhook, pemantauan kuota, dan dashboard bawaan.
+
 > REST API wrapper for **AGY CLI** (Antigravity / Gemini) and **Claude CLI** — inspired by [Waha](https://waha.devlike.pro/).  
 > Session-based conversations, file uploads, webhooks, quota monitoring, and a built-in dashboard.
 
 ---
 
-## Features
+## Fitur / Features
 
-| Feature | Description |
-|---|---|
-| **Session memory** | 1 session = 1 persistent conversation. Resume anytime via `--conversation` / `--resume`. |
-| **Multi-provider** | AGY (Gemini, Claude via AGY, GPT) and Claude CLI on the same server. |
-| **File / image upload** | Attach files to any chat message via multipart form. |
-| **Webhooks** | Per-session webhooks with HMAC-SHA256 signing, retry policies, custom headers. |
-| **Quota monitoring** | Real-time weekly quota from AGY and Claude CLI — via `/quota` endpoint. |
-| **Usage tracking** | Rolling log of every API call with status, model, latency, aggregated by day. |
-| **Swagger UI** | Full OpenAPI 3.0 docs at `/docs`. |
-| **Dashboard** | Dark-themed SPA at `/` — Sessions, Usage, Quota pages. |
+| Fitur / Feature | Indonesia | English |
+|---|---|---|
+| **Session memory** | 1 sesi = 1 percakapan persisten. Lanjutkan kapan saja via `--conversation` / `--resume`. | 1 session = 1 persistent conversation. Resume anytime via `--conversation` / `--resume`. |
+| **Multi-provider** | AGY (Gemini, Claude via AGY, GPT) dan Claude CLI dalam satu server. | AGY (Gemini, Claude via AGY, GPT) and Claude CLI on the same server. |
+| **File / image upload** | Lampirkan file ke pesan chat via multipart form. | Attach files to any chat message via multipart form. |
+| **Webhooks** | Webhook per sesi dengan penandatanganan HMAC-SHA256, kebijakan retry, header kustom. | Per-session webhooks with HMAC-SHA256 signing, retry policies, custom headers. |
+| **Quota monitoring** | Kuota mingguan real-time dari AGY dan Claude CLI — via endpoint `/quota`. | Real-time weekly quota from AGY and Claude CLI — via `/quota` endpoint. |
+| **Usage tracking** | Log bergulir setiap panggilan API dengan status, model, latensi, dikelompokkan per hari. | Rolling log of every API call with status, model, latency, aggregated by day. |
+| **Swagger UI** | Dokumentasi OpenAPI 3.0 lengkap di `/docs`. | Full OpenAPI 3.0 docs at `/docs`. |
+| **Dashboard** | SPA bertema gelap di `/` — halaman Sessions, Usage, Quota. | Dark-themed SPA at `/` — Sessions, Usage, Quota pages. |
 
 ---
 
-## Quick Start
+## Mulai Cepat / Quick Start
 
 ```bash
-# Install dependencies
+# Instal dependensi / Install dependencies
 cd /home/runia/agy-openapi
 npm install
 
-# Start server
+# Jalankan server / Start server
 node index.js
 
 # API:       http://localhost:7877
@@ -35,51 +38,51 @@ node index.js
 # Swagger:   http://localhost:7877/docs
 ```
 
-**Requirements**
-- `agy` binary at `/usr/local/bin/agy` (Antigravity CLI)
-- `claude` binary at `/usr/bin/claude` (Claude Code CLI)
-- `antigravity-cli-daemon.service` running (`systemctl --user start antigravity-cli-daemon`)
+**Prasyarat / Requirements**
+- Binary `agy` di `/usr/local/bin/agy` (Antigravity CLI)
+- Binary `claude` di `/usr/bin/claude` (Claude Code CLI)
+- `antigravity-cli-daemon.service` berjalan (`systemctl --user start antigravity-cli-daemon`)
 - Node.js 18+
 
 ---
 
 ## Dashboard
 
-Access at **`http://localhost:7877/`**
+Akses di / Access at **`http://localhost:7877/`**
 
-Three pages via the top navigation:
+Tiga halaman via navigasi atas / Three pages via the top navigation:
 
-| Page | Description |
-|---|---|
-| **Sessions** | Create, select, and chat with sessions. Provider switcher (AGY / Claude). Webhook config per session. |
-| **Usage** | API call statistics — total calls, avg response, by status/model/provider, per-day table. |
-| **Quota** | Weekly quota remaining for each AGY model group and Claude CLI. |
+| Halaman / Page | Indonesia | English |
+|---|---|---|
+| **Sessions** | Buat, pilih, dan chat dengan sesi. Pemilih provider (AGY / Claude). Konfigurasi webhook per sesi. | Create, select, and chat with sessions. Provider switcher (AGY / Claude). Webhook config per session. |
+| **Usage** | Statistik panggilan API — total panggilan, avg respons, per status/model/provider, tabel per hari. | API call statistics — total calls, avg response, by status/model/provider, per-day table. |
+| **Quota** | Sisa kuota mingguan untuk setiap grup model AGY dan Claude CLI. | Weekly quota remaining for each AGY model group and Claude CLI. |
 
 ---
 
-## API Reference
+## Referensi API / API Reference
 
 Base URL: `http://localhost:7877`
 
-### AGY Sessions
+### Sesi AGY / AGY Sessions
 
 ```
-GET    /sessions                       List all sessions
-GET    /sessions/:id                   Get session info
-DELETE /sessions/:id                   Delete session (resets conversation)
+GET    /sessions                       Daftar semua sesi / List all sessions
+GET    /sessions/:id                   Info sesi / Get session info
+DELETE /sessions/:id                   Hapus sesi (reset percakapan) / Delete session (resets conversation)
 
-POST   /sessions/:id/chat              Chat in session
-POST   /sessions/:id/chat/file         Chat with file attachment
+POST   /sessions/:id/chat              Chat dalam sesi / Chat in session
+POST   /sessions/:id/chat/file         Chat dengan lampiran file / Chat with file attachment
 
-GET    /sessions/:id/webhooks          Get webhook config
-PUT    /sessions/:id/webhooks          Set webhook config
-DELETE /sessions/:id/webhooks          Clear webhooks
-POST   /sessions/:id/webhooks/test     Fire test webhook event
+GET    /sessions/:id/webhooks          Ambil konfigurasi webhook / Get webhook config
+PUT    /sessions/:id/webhooks          Atur konfigurasi webhook / Set webhook config
+DELETE /sessions/:id/webhooks          Hapus semua webhook / Clear webhooks
+POST   /sessions/:id/webhooks/test     Kirim test webhook / Fire test webhook event
 ```
 
-### Claude Sessions
+### Sesi Claude / Claude Sessions
 
-Same endpoints under `/claude/`:
+Endpoint yang sama di bawah `/claude/` / Same endpoints under `/claude/`:
 
 ```
 POST   /claude/sessions/:id/chat
@@ -89,32 +92,32 @@ PUT    /claude/sessions/:id/webhooks
 ...
 ```
 
-### Models
+### Model
 
 ```
-GET    /models         AGY models + effort levels
-GET    /claude/models  Claude models
+GET    /models         Model AGY + effort levels
+GET    /claude/models  Model Claude
 ```
 
-### Stateless Chat
+### Chat Stateless / Stateless Chat
 
 ```
-POST   /chat           Single-turn AGY (no session)
-POST   /chat/file      Single-turn AGY with file
+POST   /chat           Single-turn AGY (tanpa sesi / no session)
+POST   /chat/file      Single-turn AGY dengan file
 POST   /claude/chat    Single-turn Claude
 POST   /claude/chat/file
 ```
 
-### Monitoring
+### Pemantauan / Monitoring
 
 ```
-GET    /usage          Usage statistics (query: ?days=7&provider=agy&raw=true)
-GET    /quota          Quota status — AGY model groups + Claude CLI
+GET    /usage          Statistik penggunaan / Usage statistics (query: ?days=7&provider=agy&raw=true)
+GET    /quota          Status kuota — grup model AGY + Claude CLI / Quota status — AGY model groups + Claude CLI
 ```
 
 ---
 
-## Chat Request
+## Contoh Permintaan Chat / Chat Request
 
 ```bash
 curl -X POST http://localhost:7877/sessions/my-session/chat \
@@ -126,7 +129,7 @@ curl -X POST http://localhost:7877/sessions/my-session/chat \
   }'
 ```
 
-**Response:**
+**Respons / Response:**
 ```json
 {
   "output": "Halo! Aku adalah ...",
@@ -138,7 +141,7 @@ curl -X POST http://localhost:7877/sessions/my-session/chat \
 }
 ```
 
-### File Upload
+### Upload File / File Upload
 
 ```bash
 curl -X POST http://localhost:7877/sessions/my-session/chat/file \
@@ -148,8 +151,9 @@ curl -X POST http://localhost:7877/sessions/my-session/chat/file \
 
 ---
 
-## Webhooks
+## Webhook
 
+Setiap sesi dapat memiliki webhook. Konfigurasi via API atau dashboard.  
 Each session can have a webhook. Configure via API or the dashboard.
 
 ```bash
@@ -164,16 +168,16 @@ curl -X PUT http://localhost:7877/sessions/my-session/webhooks \
   }]'
 ```
 
-### Events
+### Event
 
-| Event | Fired when |
-|---|---|
-| `message.completed` | AGY/Claude finishes generating a response |
-| `session.created` | A new session is created |
-| `session.deleted` | A session is deleted |
-| `*` | All events |
+| Event | Indonesia | English |
+|---|---|---|
+| `message.completed` | AGY/Claude selesai menghasilkan respons | AGY/Claude finishes generating a response |
+| `session.created` | Sesi baru dibuat | A new session is created |
+| `session.deleted` | Sesi dihapus | A session is deleted |
+| `*` | Semua event | All events |
 
-### Webhook Payload
+### Payload Webhook / Webhook Payload
 
 ```json
 {
@@ -192,15 +196,16 @@ curl -X PUT http://localhost:7877/sessions/my-session/webhooks \
 }
 ```
 
+Tanda tangan HMAC ada di header `X-Hub-Signature-256`: `sha256=<hex>`.  
 HMAC signature is in the `X-Hub-Signature-256` header: `sha256=<hex>`.
 
 ---
 
-## Models
+## Model
 
 ### AGY
 
-| ID | Name | Effort |
+| ID | Nama / Name | Effort |
 |---|---|---|
 | `gemini-3.8-flash-low` | Gemini 3.8 Flash (Low) | — |
 | `gemini-3.8-flash-medium` | Gemini 3.8 Flash (Medium) | — |
@@ -209,12 +214,12 @@ HMAC signature is in the `X-Hub-Signature-256` header: `sha256=<hex>`.
 | `claude-opus-4-6-thinking` | Claude Opus 4.6 (Thinking) | ✓ |
 | `gpt-oss-120b-medium` | GPT-OSS 120B (Medium) | — |
 
-Effort levels: `low` · `medium` · `high` · `xhigh` · `max`  
-Default model: `gemini-3.8-flash-low`, default effort: `low`
+Tingkat effort / Effort levels: `low` · `medium` · `high` · `xhigh` · `max`  
+Model default: `gemini-3.8-flash-low`, effort default: `low`
 
 ### Claude CLI
 
-| ID | Name |
+| ID | Nama / Name |
 |---|---|
 | `claude-haiku-4-5-20251001` | Claude Haiku 4.5 |
 | `claude-sonnet-4-6` | Claude Sonnet 4.6 |
@@ -223,7 +228,7 @@ Default model: `gemini-3.8-flash-low`, default effort: `low`
 
 ---
 
-## Quota
+## Kuota / Quota
 
 ```bash
 curl http://localhost:7877/quota
@@ -268,7 +273,7 @@ curl http://localhost:7877/quota
 
 ---
 
-## Usage Statistics
+## Statistik Penggunaan / Usage Statistics
 
 ```bash
 curl "http://localhost:7877/usage?days=7"
@@ -288,24 +293,24 @@ curl "http://localhost:7877/usage?days=7"
 }
 ```
 
-**Query params:**
-- `days` — lookback window (default: 7)
-- `provider` — filter by `agy` or `claude`
-- `raw=true` — return raw log array
+**Parameter query / Query params:**
+- `days` — jendela lookback (default: 7) / lookback window (default: 7)
+- `provider` — filter by `agy` atau/or `claude`
+- `raw=true` — kembalikan array log mentah / return raw log array
 
 ---
 
-## Environment Variables
+## Variabel Lingkungan / Environment Variables
 
-| Variable | Default | Description |
-|---|---|---|
-| `PORT` | `7877` | Server port |
-| `DBUS_SESSION_BUS_ADDRESS` | `unix:path=/run/user/1000/bus` | DBus address for AGY |
-| `XDG_RUNTIME_DIR` | `/run/user/1000` | XDG runtime dir for AGY |
+| Variabel / Variable | Default | Indonesia | English |
+|---|---|---|---|
+| `PORT` | `7877` | Port server | Server port |
+| `DBUS_SESSION_BUS_ADDRESS` | `unix:path=/run/user/1000/bus` | Alamat DBus untuk AGY | DBus address for AGY |
+| `XDG_RUNTIME_DIR` | `/run/user/1000` | Direktori runtime XDG untuk AGY | XDG runtime dir for AGY |
 
 ---
 
-## Systemd Service
+## Layanan Systemd / Systemd Service
 
 ```ini
 # /etc/systemd/user/agy-openapi.service
@@ -332,19 +337,20 @@ journalctl --user -u agy-openapi -f
 
 ---
 
-## Project Structure
+## Struktur Proyek / Project Structure
 
 ```
 agy-openapi/
-├── index.js          # Express server — all routes, session store, webhook engine
+├── index.js              # Server Express — semua route, session store, webhook engine
 ├── public/
-│   └── index.html    # Dashboard SPA (vanilla JS + Tailwind CDN)
-├── sessions.json     # AGY session store
-├── sessions-claude.json  # Claude session store
-├── usage.json        # Rolling usage log (max 10,000 entries)
-└── server.log        # Runtime log
+│   └── index.html        # Dashboard SPA (vanilla JS + Tailwind CDN)
+├── sessions.json         # Penyimpanan sesi AGY / AGY session store
+├── sessions-claude.json  # Penyimpanan sesi Claude / Claude session store
+├── usage.json            # Log penggunaan bergulir (maks 10.000 entri) / Rolling usage log (max 10,000 entries)
+└── server.log            # Log runtime / Runtime log
 ```
 
 ---
 
-*Dibuat oleh runia.id · Terinspirasi dari [Waha](https://waha.devlike.pro/)*
+*Dibuat oleh runia.id · Terinspirasi dari [Waha](https://waha.devlike.pro/)*  
+*Created by runia.id · Inspired by [Waha](https://waha.devlike.pro/)*
