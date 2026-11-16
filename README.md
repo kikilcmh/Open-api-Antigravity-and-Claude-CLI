@@ -8,23 +8,31 @@
 [![Platform](https://img.shields.io/badge/platform-linux-lightgrey?logo=linux&logoColor=white)](https://www.linux.org)
 [![Express](https://img.shields.io/badge/Express-5.x-000000?logo=express&logoColor=white)](https://expressjs.com)
 
-**REST API wrapper untuk [AGY CLI](https://antigravity.dev) (Gemini · Claude · GPT) dan [Claude CLI](https://claude.ai/code)**
+REST API wrapper untuk [AGY CLI](https://antigravity.dev) dan [Claude CLI](https://claude.ai/code)
 
 Terinspirasi dari [Waha](https://waha.devlike.pro/) · Dibuat oleh [runia.id](https://runia.id)
 
----
+<br/>
 
-**Pilih bahasa / Choose language:**
-
-[Bahasa Indonesia](#bahasa-indonesia) &nbsp;|&nbsp; [English](#english)
+[![Bahasa Indonesia](https://img.shields.io/badge/Bahasa_Indonesia-→-2563eb?style=for-the-badge)](https://github.com/kikilcmh/Open-api-Antigravity-and-Claude-CLI#bahasa-indonesia)
+&nbsp;
+[![English](https://img.shields.io/badge/English-→-2563eb?style=for-the-badge)](https://github.com/kikilcmh/Open-api-Antigravity-and-Claude-CLI#english)
 
 </div>
 
 ---
 
-<a name="bahasa-indonesia"></a>
+<a id="bahasa-indonesia"></a>
 
-## Bahasa Indonesia
+<div align="center">
+
+[![Bahasa Indonesia](https://img.shields.io/badge/Bahasa_Indonesia-●_Aktif-2563eb?style=for-the-badge)](https://github.com/kikilcmh/Open-api-Antigravity-and-Claude-CLI#bahasa-indonesia)
+&nbsp;
+[![English](https://img.shields.io/badge/English-○_Switch-6b7280?style=for-the-badge)](https://github.com/kikilcmh/Open-api-Antigravity-and-Claude-CLI#english)
+
+</div>
+
+<br/>
 
 ### Daftar Isi
 
@@ -53,7 +61,7 @@ Terinspirasi dari [Waha](https://waha.devlike.pro/) · Dibuat oleh [runia.id](ht
 
 ### Tentang
 
-**AGY OpenAPI** adalah REST API wrapper yang membungkus [AGY CLI](https://antigravity.dev) dan [Claude CLI](https://claude.ai/code) menjadi HTTP endpoints yang siap pakai — lengkap dengan manajemen sesi, webhook, monitoring kuota, dan dashboard bawaan.
+**AGY OpenAPI** adalah REST API wrapper yang membungkus [AGY CLI](https://antigravity.dev) dan [Claude CLI](https://claude.ai/code) menjadi HTTP endpoints siap pakai — lengkap dengan manajemen sesi, webhook, monitoring kuota, dan dashboard bawaan.
 
 > Konsep serupa dengan [Waha](https://waha.devlike.pro/) untuk WhatsApp, tapi untuk model AI.
 
@@ -117,7 +125,7 @@ Akses di **[http://localhost:7877/](http://localhost:7877/)**
 
 ### Referensi API
 
-Base URL: `http://localhost:7877`
+Base URL: `http://localhost:7877` &nbsp;·&nbsp; Dokumentasi lengkap: **[Swagger UI →](http://localhost:7877/docs)**
 
 #### Sesi AGY
 
@@ -176,8 +184,6 @@ GET    /usage    Statistik penggunaan  (?days=7&provider=agy&raw=true)
 GET    /quota    Status kuota AGY + Claude CLI
 ```
 
-Lihat dokumentasi lengkap di **[Swagger UI](http://localhost:7877/docs)**.
-
 ---
 
 ### Contoh Penggunaan
@@ -214,8 +220,6 @@ curl -X POST http://localhost:7877/sessions/my-session/chat/file \
 ```
 
 #### Webhook
-
-Konfigurasi webhook untuk menerima notifikasi real-time setiap kali sesi selesai memproses pesan:
 
 ```bash
 curl -X PUT http://localhost:7877/sessions/my-session/webhooks \
@@ -356,8 +360,6 @@ curl "http://localhost:7877/usage?days=7"
 
 ### Systemd Service
 
-Jalankan sebagai service agar otomatis berjalan saat boot:
-
 ```ini
 # /etc/systemd/user/agy-openapi.service
 [Unit]
@@ -396,17 +398,28 @@ agy-openapi/
 └── server.log            # Log runtime
 ```
 
-<div align="right">
+<div align="center"><br/>
 
-[Baca dalam Bahasa Inggris ↓](#english) &nbsp;·&nbsp; [Kembali ke atas ↑](#agyopenapi)
+[![Bahasa Indonesia](https://img.shields.io/badge/Bahasa_Indonesia-●_Aktif-2563eb?style=for-the-badge)](https://github.com/kikilcmh/Open-api-Antigravity-and-Claude-CLI#bahasa-indonesia)
+&nbsp;
+[![English](https://img.shields.io/badge/English-○_Switch-6b7280?style=for-the-badge)](https://github.com/kikilcmh/Open-api-Antigravity-and-Claude-CLI#english)
 
 </div>
 
 ---
+---
 
-<a name="english"></a>
+<a id="english"></a>
 
-## English
+<div align="center">
+
+[![Bahasa Indonesia](https://img.shields.io/badge/Bahasa_Indonesia-○_Switch-6b7280?style=for-the-badge)](https://github.com/kikilcmh/Open-api-Antigravity-and-Claude-CLI#bahasa-indonesia)
+&nbsp;
+[![English](https://img.shields.io/badge/English-●_Active-2563eb?style=for-the-badge)](https://github.com/kikilcmh/Open-api-Antigravity-and-Claude-CLI#english)
+
+</div>
+
+<br/>
 
 ### Table of Contents
 
@@ -499,7 +512,7 @@ Access at **[http://localhost:7877/](http://localhost:7877/)**
 
 ### API Reference
 
-Base URL: `http://localhost:7877`
+Base URL: `http://localhost:7877` &nbsp;·&nbsp; Full docs: **[Swagger UI →](http://localhost:7877/docs)**
 
 #### AGY Sessions
 
@@ -558,8 +571,6 @@ GET    /usage    Usage statistics  (?days=7&provider=agy&raw=true)
 GET    /quota    Quota status — AGY model groups + Claude CLI
 ```
 
-See the full documentation at **[Swagger UI](http://localhost:7877/docs)**.
-
 ---
 
 ### Usage Examples
@@ -596,8 +607,6 @@ curl -X POST http://localhost:7877/sessions/my-session/chat/file \
 ```
 
 #### Webhooks
-
-Configure a webhook to receive real-time notifications whenever a session finishes processing a message:
 
 ```bash
 curl -X PUT http://localhost:7877/sessions/my-session/webhooks \
@@ -738,8 +747,6 @@ curl "http://localhost:7877/usage?days=7"
 
 ### Systemd Service
 
-Run as a system service to auto-start on boot:
-
 ```ini
 # /etc/systemd/user/agy-openapi.service
 [Unit]
@@ -778,15 +785,13 @@ agy-openapi/
 └── server.log            # Runtime log
 ```
 
-<div align="right">
+<div align="center"><br/>
 
-[Baca dalam Bahasa Indonesia ↑](#bahasa-indonesia) &nbsp;·&nbsp; [Back to top ↑](#agyopenapi)
+[![Bahasa Indonesia](https://img.shields.io/badge/Bahasa_Indonesia-○_Switch-6b7280?style=for-the-badge)](https://github.com/kikilcmh/Open-api-Antigravity-and-Claude-CLI#bahasa-indonesia)
+&nbsp;
+[![English](https://img.shields.io/badge/English-●_Active-2563eb?style=for-the-badge)](https://github.com/kikilcmh/Open-api-Antigravity-and-Claude-CLI#english)
 
-</div>
-
----
-
-<div align="center">
+<br/><br/>
 
 Made by [runia.id](https://runia.id) &nbsp;·&nbsp; Inspired by [Waha](https://waha.devlike.pro/)
 
