@@ -1,0 +1,8 @@
+node_modules/
+sessions.json
+sessions-claude.json
+usage.json
+server.log
+__pycache__/
+*.pyc
+.env

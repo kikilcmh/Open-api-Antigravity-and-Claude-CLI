@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI API Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --primary: #34d399;
+      --primary-dark: #10b981;
+      --bg: #111827;
+      --surface: #1f2937;
+      --surface2: #374151;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.15);
+    }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); }
+    pre { white-space: pre-wrap; word-break: break-word; }
+    .session-card { transition: all .12s; }
+    .session-card:hover { background: rgba(52,211,153,0.06); }
+    .session-card.active { background: rgba(52,211,153,0.1); border-color: rgba(52,211,153,0.3) !important; }
+    .chat-bubble-user { background: var(--primary-dark); color: #fff; border-radius: 18px 18px 4px 18px; }
+    .chat-bubble-ai { background: var(--surface); color: #e2e8f0; border-radius: 18px 18px 18px 4px; border: 1px solid var(--border); }
+    .tab-active { border-bottom: 2px solid var(--primary); color: var(--primary); }
+    .btn-primary { background: var(--primary); color: #030712; font-weight: 600; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .nav-active { background: rgba(52,211,153,0.15); color: var(--primary); font-weight: 500; }
+    .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; letter-spacing: .03em; }
+    .badge-active { background: rgba(52,211,153,0.15); color: #34d399; }
+    .badge-idle { background: rgba(107,114,128,0.2); color: #9ca3af; }
+    .badge-agy { background: rgba(52,211,153,0.12); color: #34d399; }
+    .badge-claude { background: rgba(249,115,22,0.12); color: #fb923c; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+    input, select, textarea { color-scheme: dark; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col text-gray-200">
+
+<!-- Navbar -->
+<nav style="background:#1f2937;border-bottom:1px solid var(--border)" class="px-5 py-0 flex items-center justify-between h-14 flex-shrink-0">
+  <div class="flex items-center gap-3">
+    <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs flex-shrink-0" style="background:var(--primary);color:#030712">AI</div>
+    <span class="font-semibold text-white text-base">AGY API</span>
+    <span class="text-xs px-2 py-0.5 rounded font-mono" style="background:rgba(255,255,255,0.06);color:#6b7280">v1.0</span>
+  </div>
+
+  <!-- Page tabs -->
+  <div class="flex items-center h-full">
+    <button onclick="showPage('chat')" id="navChat" class="nav-page-btn h-full px-5 text-sm flex items-center gap-2 border-b-2 border-transparent nav-active transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      Sessions
+    </button>
+    <button onclick="showPage('usage')" id="navUsage" class="nav-page-btn h-full px-5 text-sm flex items-center gap-2 border-b-2 border-transparent text-gray-400 hover:text-gray-200 transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      Usage
+    </button>
+    <button onclick="showPage('quota')" id="navQuota" class="nav-page-btn h-full px-5 text-sm flex items-center gap-2 border-b-2 border-transparent text-gray-400 hover:text-gray-200 transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      Quota
+    </button>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <a href="/docs" target="_blank" class="text-sm flex items-center gap-1.5 transition-colors" style="color:var(--primary)" onmouseover="this.style.color='#10b981'" onmouseout="this.style.color='var(--primary)'">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      API Docs
+    </a>
+    <div id="statusDot" class="w-2 h-2 rounded-full bg-emerald-400" title="API Online"></div>
+  </div>
+</nav>
+
+<!-- ═══════════════════ PAGE: Sessions ═══════════════════ -->
+<div id="pageChatLayout" class="flex flex-1 overflow-hidden" style="height:calc(100vh - 56px)">
+
+  <!-- Sidebar -->
+  <aside class="w-72 flex flex-col flex-shrink-0" style="background:#1a2332;border-right:1px solid var(--border)">
+
+    <!-- Provider switch + actions -->
+    <div class="p-3" style="border-bottom:1px solid var(--border)">
+      <div class="flex gap-1 mb-3 p-1 rounded-lg" style="background:rgba(0,0,0,0.3)">
+        <button onclick="switchProvider('agy')" id="providerAgy" class="flex-1 text-xs py-1.5 rounded-md font-semibold transition-colors" style="background:var(--primary);color:#030712">AGY</button>
+        <button onclick="switchProvider('claude')" id="providerClaude" class="flex-1 text-xs py-1.5 rounded-md text-gray-400 hover:text-gray-200 transition-colors">Claude</button>
+      </div>
+      <button onclick="openNewSessionModal()" class="w-full btn-primary text-sm py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        New Session
+      </button>
+    </div>
+
+    <!-- Session count -->
+    <div class="px-4 py-2 flex items-center justify-between">
+      <span class="text-xs font-semibold uppercase tracking-wider text-gray-500">Sessions</span>
+      <span id="sessionCount" class="badge badge-active">0</span>
+    </div>
+
+    <!-- Session list -->
+    <div id="sessionList" class="flex-1 overflow-y-auto px-2 pb-2 space-y-1">
+      <div class="text-center text-gray-600 text-sm py-10">No sessions yet</div>
+    </div>
+
+    <!-- Footer stats -->
+    <div class="p-3" style="border-top:1px solid var(--border)">
+      <div class="grid grid-cols-2 gap-2">
+        <div class="rounded-lg p-2.5 text-center" style="background:rgba(0,0,0,0.3)">
+          <div id="statSessions" class="text-lg font-bold text-white">0</div>
+          <div class="text-xs text-gray-500">Sessions</div>
+        </div>
+        <div class="rounded-lg p-2.5 text-center" style="background:rgba(0,0,0,0.3)">
+          <div id="statModels" class="text-lg font-bold text-white">0</div>
+          <div class="text-xs text-gray-500">Models</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main panel -->
+  <main class="flex-1 flex flex-col overflow-hidden" style="background:var(--bg)">
+
+    <!-- Empty state -->
+    <div id="emptyState" class="flex-1 flex flex-col items-center justify-center text-center p-8">
+      <div class="w-20 h-20 rounded-2xl flex items-center justify-center mb-5" style="background:var(--surface)">
+        <svg class="w-10 h-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      </div>
+      <h2 class="text-base font-semibold text-gray-400 mb-2">Select a session</h2>
+      <p class="text-sm text-gray-600 max-w-xs">Create a new session or select an existing one to start chatting</p>
+      <button onclick="openNewSessionModal()" class="mt-5 btn-primary text-sm py-2 px-5 rounded-lg flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        New Session
+      </button>
+    </div>
+
+    <!-- Session detail -->
+    <div id="sessionPanel" class="flex-1 flex flex-col overflow-hidden hidden">
+
+      <!-- Session header -->
+      <div class="px-5 py-3 flex items-center justify-between flex-shrink-0" style="background:var(--surface);border-bottom:1px solid var(--border)">
+        <div class="flex items-center gap-3">
+          <div id="panelAvatar" class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0" style="background:var(--primary);color:#030712"></div>
+          <div>
+            <div id="panelSessionId" class="font-semibold text-white text-sm font-mono"></div>
+            <div id="panelMeta" class="text-xs text-gray-500 mt-0.5"></div>
+          </div>
+          <div id="panelBadge" class="badge badge-active ml-1">ACTIVE</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="switchTab('webhook')" class="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors" style="background:rgba(255,255,255,0.05);color:#9ca3af" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            Webhook
+          </button>
+          <button onclick="deleteCurrentSession()" class="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors" style="background:rgba(239,68,68,0.1);color:#f87171" onmouseover="this.style.background='rgba(239,68,68,0.2)'" onmouseout="this.style.background='rgba(239,68,68,0.1)'">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            Delete
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex gap-5 px-5 flex-shrink-0" style="background:var(--surface);border-bottom:1px solid var(--border)">
+        <button onclick="switchTab('chat')" id="tabChat" class="text-sm py-3 tab-active">Chat</button>
+        <button onclick="switchTab('info')" id="tabInfo" class="text-sm py-3 text-gray-500 hover:text-gray-300">Info</button>
+        <button onclick="switchTab('webhook')" id="tabWebhook" class="text-sm py-3 text-gray-500 hover:text-gray-300">Webhook</button>
+      </div>
+
+      <!-- Tab: Chat -->
+      <div id="tabContentChat" class="flex-1 flex flex-col overflow-hidden">
+        <div id="chatMessages" class="flex-1 overflow-y-auto p-5 space-y-3"></div>
+        <div class="p-4 flex-shrink-0" style="background:var(--surface);border-top:1px solid var(--border)">
+          <div class="flex gap-2 mb-2.5">
+            <select id="chatModel" class="flex-1 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1" style="background:var(--bg);border:1px solid var(--border-strong);color:#d1d5db;--tw-ring-color:var(--primary)">
+              <option value="">Default model</option>
+            </select>
+            <select id="chatEffort" class="w-32 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1" style="background:var(--bg);border:1px solid var(--border-strong);color:#d1d5db">
+              <option value="low" selected>low</option>
+              <option value="medium">medium</option>
+              <option value="high">high</option>
+              <option value="xhigh">xhigh</option>
+              <option value="max">max</option>
+            </select>
+            <label class="rounded-lg px-3 py-1.5 cursor-pointer flex items-center transition-colors" style="background:var(--bg);border:1px solid var(--border-strong);color:#6b7280" title="Attach file" onmouseover="this.style.color='#9ca3af'" onmouseout="this.style.color='#6b7280'">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+              <input type="file" id="chatFile" class="hidden" onchange="previewFile(this)" />
+            </label>
+          </div>
+          <div id="filePreview" class="hidden mb-2 flex items-center gap-2 text-xs rounded-lg px-3 py-2" style="background:rgba(52,211,153,0.08);color:#34d399">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span id="filePreviewName"></span>
+            <button onclick="clearFile()" class="ml-auto text-gray-500 hover:text-red-400">✕</button>
+          </div>
+          <div class="flex gap-2">
+            <textarea id="chatInput" rows="2" placeholder="Ketik pesan…" onkeydown="handleKey(event)"
+              class="flex-1 text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 placeholder-gray-600"
+              style="background:var(--bg);border:1px solid var(--border-strong);color:#e2e8f0;--tw-ring-color:var(--primary)"></textarea>
+            <button onclick="sendMessage()" id="sendBtn"
+              class="btn-primary disabled:opacity-40 px-4 rounded-lg flex items-center justify-center transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Info -->
+      <div id="tabContentInfo" class="flex-1 overflow-y-auto p-6 hidden">
+        <div class="max-w-lg space-y-4">
+          <div class="rounded-xl p-4 space-y-3" style="background:var(--surface);border:1px solid var(--border)">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-500">Session Details</h3>
+            <div id="infoGrid" class="space-y-2.5 text-sm"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Webhook -->
+      <div id="tabContentWebhook" class="flex-1 overflow-y-auto p-6 hidden">
+        <div class="max-w-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-gray-300">Webhook Configuration</h3>
+            <button onclick="testWebhook()" class="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors" style="background:rgba(255,255,255,0.05);color:#9ca3af" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              Test Fire
+            </button>
+          </div>
+          <div class="rounded-xl p-5 space-y-3" style="background:var(--surface);border:1px solid var(--border)">
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Webhook URL</label>
+              <input id="whUrl" type="url" placeholder="https://webhook.site/your-id"
+                class="w-full text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1"
+                style="background:var(--bg);border:1px solid var(--border-strong);color:#e2e8f0" />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Events</label>
+              <div class="flex gap-4 flex-wrap">
+                <label class="flex items-center gap-1.5 text-sm cursor-pointer text-gray-300"><input type="checkbox" class="wh-event rounded accent-emerald-500" value="message.completed" checked /> message.completed</label>
+                <label class="flex items-center gap-1.5 text-sm cursor-pointer text-gray-300"><input type="checkbox" class="wh-event rounded accent-emerald-500" value="session.created" /> session.created</label>
+                <label class="flex items-center gap-1.5 text-sm cursor-pointer text-gray-300"><input type="checkbox" class="wh-event rounded accent-emerald-500" value="session.deleted" /> session.deleted</label>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">HMAC Secret <span class="text-gray-700">(optional)</span></label>
+              <input id="whHmac" type="text" placeholder="your-secret-key"
+                class="w-full text-sm rounded-lg px-3 py-2 focus:outline-none"
+                style="background:var(--bg);border:1px solid var(--border-strong);color:#e2e8f0" />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Retries</label>
+              <div class="flex gap-2">
+                <input id="whRetryAttempts" type="number" placeholder="Attempts" min="1" max="20" value="3"
+                  class="w-24 text-sm rounded-lg px-3 py-2 focus:outline-none"
+                  style="background:var(--bg);border:1px solid var(--border-strong);color:#e2e8f0" />
+                <input id="whRetryDelay" type="number" placeholder="Delay (s)" min="1" max="60" value="2"
+                  class="w-24 text-sm rounded-lg px-3 py-2 focus:outline-none"
+                  style="background:var(--bg);border:1px solid var(--border-strong);color:#e2e8f0" />
+                <select id="whRetryPolicy" class="flex-1 text-sm rounded-lg px-3 py-2 focus:outline-none"
+                  style="background:var(--bg);border:1px solid var(--border-strong);color:#d1d5db">
+                  <option value="linear">linear</option>
+                  <option value="exponential">exponential</option>
+                  <option value="constant">constant</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex gap-2 pt-1">
+              <button onclick="saveWebhook()" class="flex-1 btn-primary text-sm py-2 rounded-lg transition-colors">Save Webhook</button>
+              <button onclick="clearWebhook()" class="text-sm py-2 px-4 rounded-lg transition-colors" style="background:rgba(255,255,255,0.05);color:#9ca3af" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">Clear</button>
+            </div>
+          </div>
+
+          <div id="webhookPayloadPreview" class="rounded-xl p-4 hidden" style="background:var(--surface);border:1px solid var(--border)">
+            <h4 class="text-xs font-semibold text-gray-500 mb-2">Example payload:</h4>
+            <pre class="text-xs text-emerald-400"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ═══════════════════ PAGE: Usage ═══════════════════ -->
+<div id="pageUsage" class="hidden flex-1 overflow-hidden" style="height:calc(100vh - 56px)">
+  <div class="h-full overflow-y-auto" style="background:var(--bg)">
+    <div class="max-w-5xl mx-auto px-6 py-8">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-xl font-bold text-white">Usage Statistics</h1>
+          <p class="text-sm text-gray-500 mt-0.5">API call history and performance metrics</p>
+        </div>
+        <select id="usageDays" onchange="loadUsage()" class="text-sm rounded-lg px-3 py-1.5 focus:outline-none" style="background:var(--surface);border:1px solid var(--border-strong);color:#d1d5db">
+          <option value="1">Today</option>
+          <option value="7" selected>Last 7 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
+      </div>
+      <div id="usageContent" class="space-y-5">
+        <div class="text-center text-gray-600 py-16">Loading…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE: Quota ═══════════════════ -->
+<div id="pageQuota" class="hidden flex-1 overflow-hidden" style="height:calc(100vh - 56px)">
+  <div class="h-full overflow-y-auto" style="background:var(--bg)">
+    <div class="max-w-3xl mx-auto px-6 py-8">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-xl font-bold text-white flex items-center gap-2">
+            <svg class="w-5 h-5" style="color:var(--primary)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            Quota Status
+          </h1>
+          <p class="text-sm text-gray-500 mt-0.5">Weekly limits for AGY and Claude CLI</p>
+        </div>
+        <button onclick="loadQuota()" class="text-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors" style="background:var(--surface);border:1px solid var(--border);color:#9ca3af" onmouseover="this.style.background='#374151'" onmouseout="this.style.background='var(--surface)'">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div id="quotaContent" class="space-y-5">
+        <div class="text-center text-gray-600 py-16">Loading…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: New Session -->
+<div id="newSessionModal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.6);backdrop-filter:blur(4px)">
+  <div class="rounded-2xl p-6 w-96 shadow-2xl" style="background:var(--surface);border:1px solid var(--border-strong)">
+    <h2 class="text-base font-semibold text-white mb-4">New Session</h2>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Session ID</label>
+        <input id="newSessionId" type="text" placeholder="e.g. user-123"
+          class="w-full text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1"
+          style="background:var(--bg);border:1px solid var(--border-strong);color:#e2e8f0" />
+      </div>
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">First message</label>
+        <textarea id="newSessionPrompt" rows="3" placeholder="Halo! Aku mau tanya tentang…"
+          class="w-full text-sm rounded-lg px-3 py-2 resize-none focus:outline-none"
+          style="background:var(--bg);border:1px solid var(--border-strong);color:#e2e8f0"></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Model</label>
+          <select id="newSessionModel" class="w-full text-sm rounded-lg px-3 py-2 focus:outline-none"
+            style="background:var(--bg);border:1px solid var(--border-strong);color:#d1d5db">
+            <option value="">Default</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Effort</label>
+          <select id="newSessionEffort" class="w-full text-sm rounded-lg px-3 py-2 focus:outline-none"
+            style="background:var(--bg);border:1px solid var(--border-strong);color:#d1d5db">
+            <option value="low" selected>low</option>
+            <option value="medium">medium</option>
+            <option value="high">high</option>
+            <option value="xhigh">xhigh</option>
+            <option value="max">max</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button onclick="createSession()" class="flex-1 btn-primary text-sm py-2 rounded-lg">Create & Chat</button>
+      <button onclick="closeModal('newSessionModal')" class="text-sm py-2 px-4 rounded-lg" style="background:rgba(255,255,255,0.05);color:#9ca3af">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="hidden fixed bottom-6 right-6 text-sm px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 z-50" style="background:var(--surface);border:1px solid var(--border-strong)">
+  <span id="toastIcon"></span>
+  <span id="toastMsg" class="text-gray-200"></span>
+</div>
+
+<script>
+const API = '';
+let currentSessionId = null;
+let currentProvider = 'agy';
+let models = [];
+let claudeModels = [];
+let sessions = {};
+let claudeSessions = {};
+let chatHistory = {};
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+async function init() {
+  await Promise.all([loadModels(), loadClaudeModels()]);
+  populateModelSelects();
+  document.getElementById('statModels').textContent = getActiveModels().length;
+  await refreshSessions();
+  setInterval(refreshSessions, 10000);
+}
+
+async function loadModels() {
+  try { const r = await fetch(`${API}/models`); const d = await r.json(); models = d.models || []; } catch {}
+}
+
+async function loadClaudeModels() {
+  try { const r = await fetch(`${API}/claude/models`); const d = await r.json(); claudeModels = d.models || []; } catch {}
+}
+
+function switchProvider(p) {
+  currentProvider = p;
+  currentSessionId = null;
+  document.getElementById('sessionPanel').classList.add('hidden');
+  document.getElementById('emptyState').classList.remove('hidden');
+  const agyBtn = document.getElementById('providerAgy');
+  const claudeBtn = document.getElementById('providerClaude');
+  agyBtn.style.cssText = p === 'agy' ? 'background:var(--primary);color:#030712;font-weight:600' : 'background:transparent;color:#9ca3af';
+  claudeBtn.style.cssText = p === 'claude' ? 'background:#f97316;color:#fff;font-weight:600' : 'background:transparent;color:#9ca3af';
+  populateModelSelects();
+  document.getElementById('statModels').textContent = getActiveModels().length;
+  refreshSessions();
+}
+
+const DEFAULT_MODEL = { agy: 'gemini-3.8-flash-low', claude: 'claude-haiku-4-5-20251001' };
+
+function populateModelSelects() {
+  const activeModels = getActiveModels();
+  const defaultModel = DEFAULT_MODEL[currentProvider];
+  ['chatModel', 'newSessionModel'].forEach(id => {
+    const sel = document.getElementById(id);
+    while (sel.options.length > 1) sel.remove(1);
+    activeModels.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = `${m.name}${m.supportsEffort ? ' ⚡' : ''}`;
+      sel.appendChild(opt);
+    });
+    sel.value = defaultModel;
+  });
+}
+
+function getCurrentSessions() { return currentProvider === 'claude' ? claudeSessions : sessions; }
+function getApiBase() { return currentProvider === 'claude' ? `${API}/claude` : `${API}`; }
+function getActiveModels() { return currentProvider === 'claude' ? claudeModels : models; }
+
+async function refreshSessions() {
+  try {
+    const [agyR, claudeR] = await Promise.all([fetch(`${API}/sessions`), fetch(`${API}/claude/sessions`)]);
+    sessions = await agyR.json();
+    claudeSessions = await claudeR.json();
+    const current = getCurrentSessions();
+    renderSessionList();
+    const count = Object.keys(current).length;
+    document.getElementById('statSessions').textContent = count;
+    document.getElementById('sessionCount').textContent = count;
+    document.getElementById('statModels').textContent = getActiveModels().length;
+    if (currentSessionId && current[currentSessionId]) renderSessionInfo(currentSessionId, current[currentSessionId]);
+  } catch {}
+}
+
+// ── Session List ──────────────────────────────────────────────────────────────
+
+function renderSessionList() {
+  const container = document.getElementById('sessionList');
+  const ids = Object.keys(getCurrentSessions());
+  if (!ids.length) {
+    container.innerHTML = '<div class="text-center text-gray-600 text-xs py-10">No sessions yet</div>';
+    return;
+  }
+  const current = getCurrentSessions();
+  container.innerHTML = ids.map(id => {
+    const s = current[id];
+    const isActive = id === currentSessionId;
+    const initials = id.slice(0, 2).toUpperCase();
+    const isAgy = currentProvider === 'agy';
+    const hasConv = !!s.conversationId;
+    const model = s.model ? s.model.split('-').slice(-2).join('-') : 'default';
+    const lastUsed = s.lastUsedAt ? timeAgo(new Date(s.lastUsedAt)) : '—';
+    const hasWebhook = s.webhooks?.length > 0;
+    return `
+      <div onclick="selectSession('${id}')" class="session-card cursor-pointer rounded-xl p-3 border ${isActive ? 'active' : 'border-transparent'}" style="${isActive ? '' : 'border-color:transparent'}">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0" style="background:${isAgy ? 'rgba(52,211,153,0.2)' : 'rgba(249,115,22,0.2)'};color:${isAgy ? '#34d399' : '#fb923c'}">${initials}</div>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1.5">
+              <span class="font-medium text-sm text-white truncate font-mono">${id}</span>
+              ${hasWebhook ? '<span title="Webhook" style="color:var(--primary)" class="text-xs">⚡</span>' : ''}
+            </div>
+            <div class="text-xs text-gray-500 truncate mt-0.5">${model} · ${lastUsed}</div>
+          </div>
+          <span class="badge ${hasConv ? 'badge-active' : 'badge-idle'} flex-shrink-0">${hasConv ? 'ACTIVE' : 'NEW'}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function selectSession(id) {
+  currentSessionId = id;
+  renderSessionList();
+  document.getElementById('emptyState').classList.add('hidden');
+  document.getElementById('sessionPanel').classList.remove('hidden');
+  const s = getCurrentSessions()[id];
+  renderSessionInfo(id, s);
+  loadWebhookForm(s);
+  if (!chatHistory[id]) chatHistory[id] = [];
+  renderChatHistory(id);
+  switchTab('chat');
+}
+
+function renderSessionInfo(id, s) {
+  document.getElementById('panelSessionId').textContent = id;
+  document.getElementById('panelAvatar').textContent = id.slice(0, 2).toUpperCase();
+  const effort = s.effort ? ` · ${s.effort}` : '';
+  document.getElementById('panelMeta').textContent = (s.model || 'default model') + effort;
+  const badge = document.getElementById('panelBadge');
+  badge.className = `badge ml-1 ${s.conversationId ? 'badge-active' : 'badge-idle'}`;
+  badge.textContent = s.conversationId ? 'ACTIVE' : 'NEW';
+  document.getElementById('chatModel').value = s.model || DEFAULT_MODEL[currentProvider];
+  document.getElementById('chatEffort').value = s.effort || 'low';
+
+  const info = [
+    ['Session ID', id],
+    ['Conversation ID', s.conversationId || '—'],
+    ['Model', s.model || 'default'],
+    ['Effort', s.effort || 'default'],
+    ['Webhooks', s.webhooks?.length ? `${s.webhooks.length} configured ⚡` : 'none'],
+    ['Created', s.createdAt ? new Date(s.createdAt).toLocaleString() : '—'],
+    ['Last Used', s.lastUsedAt ? new Date(s.lastUsedAt).toLocaleString() : '—'],
+  ];
+  document.getElementById('infoGrid').innerHTML = info.map(([k, v]) => `
+    <div class="flex justify-between items-start gap-4">
+      <span class="text-gray-500 flex-shrink-0">${k}</span>
+      <span class="text-gray-300 text-right font-mono text-xs truncate max-w-xs" title="${v}">${v}</span>
+    </div>`).join('');
+}
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+
+function renderChatHistory(id) {
+  const container = document.getElementById('chatMessages');
+  const history = chatHistory[id] || [];
+  if (!history.length) {
+    container.innerHTML = '<div class="text-center text-gray-700 text-sm py-16">Start a conversation</div>';
+    return;
+  }
+  container.innerHTML = history.map(msg => `
+    <div class="flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}">
+      <div class="max-w-lg ${msg.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'} px-4 py-2.5 text-sm">
+        ${msg.role === 'ai' && msg.model ? `<div class="text-xs opacity-50 mb-1">${msg.model}${msg.effort ? ' · ' + msg.effort : ''}</div>` : ''}
+        <pre class="font-sans text-sm">${escapeHtml(msg.content)}</pre>
+      </div>
+    </div>`).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+function addChatMessage(id, role, content, meta = {}) {
+  if (!chatHistory[id]) chatHistory[id] = [];
+  chatHistory[id].push({ role, content, ...meta });
+  renderChatHistory(id);
+}
+
+async function sendMessage() {
+  if (!currentSessionId) return;
+  const input = document.getElementById('chatInput');
+  const prompt = input.value.trim();
+  if (!prompt) return;
+  const model = document.getElementById('chatModel').value || undefined;
+  const effort = document.getElementById('chatEffort').value || undefined;
+  const fileInput = document.getElementById('chatFile');
+  const hasFile = fileInput.files.length > 0;
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+  input.value = '';
+  addChatMessage(currentSessionId, 'user', prompt);
+  const container = document.getElementById('chatMessages');
+  const loadingId = 'loading-' + Date.now();
+  container.innerHTML += `<div id="${loadingId}" class="flex justify-start"><div class="chat-bubble-ai px-4 py-3"><div class="flex gap-1.5">${'<div class="w-2 h-2 rounded-full animate-bounce" style="background:#4b5563"></div>'.repeat(3)}</div></div></div>`;
+  container.scrollTop = container.scrollHeight;
+  try {
+    let data;
+    const base = getApiBase();
+    if (hasFile) {
+      const formData = new FormData();
+      formData.append('prompt', prompt);
+      formData.append('file', fileInput.files[0]);
+      if (model) formData.append('model', model);
+      if (effort) formData.append('effort', effort);
+      const r = await fetch(`${base}/sessions/${currentSessionId}/chat/file`, { method: 'POST', body: formData });
+      data = await r.json();
+    } else {
+      const body = { prompt };
+      if (model) body.model = model;
+      if (effort) body.effort = effort;
+      const r = await fetch(`${base}/sessions/${currentSessionId}/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      data = await r.json();
+    }
+    document.getElementById(loadingId)?.remove();
+    if (data.error) addChatMessage(currentSessionId, 'ai', `Error: ${data.error}`);
+    else addChatMessage(currentSessionId, 'ai', data.output || '', { model: data.model, effort: data.effort });
+    clearFile();
+    await refreshSessions();
+  } catch (err) {
+    document.getElementById(loadingId)?.remove();
+    addChatMessage(currentSessionId, 'ai', `Error: ${err.message}`);
+  }
+  btn.disabled = false;
+}
+
+function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+function previewFile(input) {
+  if (input.files.length) {
+    document.getElementById('filePreview').classList.remove('hidden');
+    document.getElementById('filePreviewName').textContent = input.files[0].name;
+  }
+}
+function clearFile() {
+  document.getElementById('chatFile').value = '';
+  document.getElementById('filePreview').classList.add('hidden');
+}
+
+// ── New Session ───────────────────────────────────────────────────────────────
+
+function openNewSessionModal() {
+  document.getElementById('newSessionModal').classList.remove('hidden');
+  document.getElementById('newSessionId').focus();
+}
+
+async function createSession() {
+  const id = document.getElementById('newSessionId').value.trim();
+  const prompt = document.getElementById('newSessionPrompt').value.trim();
+  const model = document.getElementById('newSessionModel').value || undefined;
+  const effort = document.getElementById('newSessionEffort').value || undefined;
+  if (!id) return showToast('error', 'Session ID wajib diisi');
+  if (!prompt) return showToast('error', 'Pesan pertama wajib diisi');
+  closeModal('newSessionModal');
+  await refreshSessions();
+  selectSession(id);
+  const body = { prompt };
+  if (model) body.model = model;
+  if (effort) body.effort = effort;
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+  addChatMessage(id, 'user', prompt);
+  const container = document.getElementById('chatMessages');
+  const loadingId = 'loading-new';
+  container.innerHTML += `<div id="${loadingId}" class="flex justify-start"><div class="chat-bubble-ai px-4 py-3"><div class="flex gap-1.5">${'<div class="w-2 h-2 rounded-full animate-bounce" style="background:#4b5563"></div>'.repeat(3)}</div></div></div>`;
+  container.scrollTop = container.scrollHeight;
+  try {
+    const r = await fetch(`${getApiBase()}/sessions/${id}/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await r.json();
+    document.getElementById(loadingId)?.remove();
+    addChatMessage(id, 'ai', data.output || data.error || '', { model: data.model, effort: data.effort });
+    await refreshSessions();
+    selectSession(id);
+    showToast('success', `Session "${id}" created`);
+  } catch (err) {
+    document.getElementById(loadingId)?.remove();
+    addChatMessage(id, 'ai', `Error: ${err.message}`);
+  }
+  btn.disabled = false;
+}
+
+// ── Webhook ───────────────────────────────────────────────────────────────────
+
+function loadWebhookForm(session) {
+  const wh = session.webhooks?.[0];
+  document.getElementById('whUrl').value = wh?.url || '';
+  document.getElementById('whHmac').value = wh?.hmac?.key || '';
+  document.getElementById('whRetryAttempts').value = wh?.retries?.attempts ?? 3;
+  document.getElementById('whRetryDelay').value = wh?.retries?.delaySeconds ?? 2;
+  document.getElementById('whRetryPolicy').value = wh?.retries?.policy || 'linear';
+  const events = wh?.events || ['message.completed'];
+  document.querySelectorAll('.wh-event').forEach(cb => { cb.checked = events.includes(cb.value); });
+}
+
+async function saveWebhook() {
+  if (!currentSessionId) return;
+  const url = document.getElementById('whUrl').value.trim();
+  if (!url) return showToast('error', 'URL webhook wajib diisi');
+  const events = [...document.querySelectorAll('.wh-event:checked')].map(cb => cb.value);
+  const hmacKey = document.getElementById('whHmac').value.trim();
+  const attempts = parseInt(document.getElementById('whRetryAttempts').value);
+  const delaySeconds = parseInt(document.getElementById('whRetryDelay').value);
+  const policy = document.getElementById('whRetryPolicy').value;
+  const payload = [{ url, events, hmac: hmacKey ? { key: hmacKey } : null, retries: { attempts, delaySeconds, policy }, customHeaders: null }];
+  const r = await fetch(`${getApiBase()}/sessions/${currentSessionId}/webhooks`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  if (r.ok) { showToast('success', 'Webhook saved'); await refreshSessions(); }
+  else showToast('error', 'Failed to save webhook');
+}
+
+async function clearWebhook() {
+  if (!currentSessionId) return;
+  await fetch(`${getApiBase()}/sessions/${currentSessionId}/webhooks`, { method: 'DELETE' });
+  document.getElementById('whUrl').value = '';
+  document.getElementById('whHmac').value = '';
+  showToast('success', 'Webhook cleared');
+  await refreshSessions();
+}
+
+async function testWebhook() {
+  if (!currentSessionId) return;
+  const r = await fetch(`${getApiBase()}/sessions/${currentSessionId}/webhooks/test`, { method: 'POST' });
+  const d = await r.json();
+  showToast('success', `Test fired → ${d.webhooks} webhook(s)`);
+}
+
+function openWebhookModal() { switchTab('webhook'); }
+
+function showWebhookPayloadPreview() {
+  const preview = { id: 'evt_01aaaaaaaaaaaaaaaaaaaaaaaa', timestamp: Date.now(), session: 'user-123', metadata: {}, event: 'message.completed', payload: { output: 'Response dari AGY…', conversationId: 'abc-123', model: 'claude-sonnet-4-6', effort: 'high' }, environment: { version: '1.0.0', engine: 'AGY' } };
+  const container = document.getElementById('webhookPayloadPreview');
+  if (container) { container.classList.remove('hidden'); container.querySelector('pre').textContent = JSON.stringify(preview, null, 2); }
+}
+
+// ── Delete ────────────────────────────────────────────────────────────────────
+
+async function deleteCurrentSession() {
+  if (!currentSessionId) return;
+  if (!confirm(`Hapus session "${currentSessionId}"?`)) return;
+  await fetch(`${getApiBase()}/sessions/${currentSessionId}`, { method: 'DELETE' });
+  delete chatHistory[currentSessionId];
+  currentSessionId = null;
+  document.getElementById('sessionPanel').classList.add('hidden');
+  document.getElementById('emptyState').classList.remove('hidden');
+  showToast('success', 'Session deleted');
+  await refreshSessions();
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+
+function switchTab(tab) {
+  ['chat', 'info', 'webhook'].forEach(t => {
+    document.getElementById(`tabContent${t.charAt(0).toUpperCase() + t.slice(1)}`).classList.toggle('hidden', t !== tab);
+    const btn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+    btn.className = `text-sm py-3 ${t === tab ? 'tab-active' : 'text-gray-500 hover:text-gray-300'}`;
+  });
+  if (tab === 'webhook') showWebhookPayloadPreview();
+  if (tab === 'chat') populateModelSelects();
+}
+
+// ── Page switching ────────────────────────────────────────────────────────────
+
+const PAGES = { chat: 'pageChatLayout', usage: 'pageUsage', quota: 'pageQuota' };
+const NAV_IDS = { chat: 'navChat', usage: 'navUsage', quota: 'navQuota' };
+let currentPage = 'chat';
+
+function showPage(name) {
+  currentPage = name;
+  for (const [key, elId] of Object.entries(PAGES)) {
+    const el = document.getElementById(elId);
+    if (key === name) { el.classList.remove('hidden'); el.classList.add('flex'); }
+    else { el.classList.add('hidden'); el.classList.remove('flex'); }
+  }
+  for (const [key, btnId] of Object.entries(NAV_IDS)) {
+    const btn = document.getElementById(btnId);
+    if (key === name) {
+      btn.classList.add('nav-active');
+      btn.style.borderBottomColor = 'var(--primary)';
+      btn.classList.remove('text-gray-400','hover:text-gray-200');
+    } else {
+      btn.classList.remove('nav-active');
+      btn.style.borderBottomColor = 'transparent';
+      btn.classList.add('text-gray-400','hover:text-gray-200');
+    }
+  }
+  if (name === 'usage') loadUsage();
+  if (name === 'quota') loadQuota();
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function escapeHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function timeAgo(date) {
+  const s = Math.floor((Date.now() - date) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.floor(s/60)}m ago`;
+  if (s < 86400) return `${Math.floor(s/3600)}h ago`;
+  return `${Math.floor(s/86400)}d ago`;
+}
+
+let toastTimer;
+function showToast(type, msg) {
+  clearTimeout(toastTimer);
+  const icons = { success: '✓', error: '✕', info: 'ℹ' };
+  const colors = { success: 'color:var(--primary)', error: 'color:#f87171', info: 'color:#60a5fa' };
+  document.getElementById('toastIcon').style.cssText = colors[type] || '';
+  document.getElementById('toastIcon').textContent = icons[type] || '';
+  document.getElementById('toastMsg').textContent = msg;
+  document.getElementById('toast').classList.remove('hidden');
+  toastTimer = setTimeout(() => document.getElementById('toast').classList.add('hidden'), 3000);
+}
+
+// ── Usage ─────────────────────────────────────────────────────────────────────
+
+async function loadUsage() {
+  const days = document.getElementById('usageDays').value;
+  const container = document.getElementById('usageContent');
+  container.innerHTML = '<div class="text-center text-gray-600 py-16">Loading…</div>';
+  try {
+    const r = await fetch(`${API}/usage?days=${days}`);
+    const d = await r.json();
+    renderUsage(d);
+  } catch {
+    container.innerHTML = '<div class="text-center text-red-500 py-16">Failed to load usage</div>';
+  }
+}
+
+function renderUsage(d) {
+  const container = document.getElementById('usageContent');
+  const statusColor = { success: 'color:var(--primary)', error: 'color:#f87171', quota: 'color:#fbbf24' };
+  const statusBarColor = { success: 'background:var(--primary)', error: 'background:#ef4444', quota: 'background:#f59e0b' };
+
+  const cards = [
+    { label: 'Total Calls', value: d.total, sub: d.period, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+    { label: 'Avg Response', value: d.avgResponseMs ? `${d.avgResponseMs}ms` : '—', sub: 'per request', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { label: 'AGY Calls', value: d.byProvider?.agy || 0, sub: 'provider', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+    { label: 'Claude Calls', value: d.byProvider?.claude || 0, sub: 'provider', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
+  ];
+
+  const sortedDays = Object.keys(d.byDay || {}).sort().reverse();
+
+  container.innerHTML = `
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      ${cards.map(c => `
+        <div class="rounded-xl p-4" style="background:var(--surface);border:1px solid var(--border)">
+          <svg class="w-5 h-5 mb-3" style="color:var(--primary)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${c.icon}"/></svg>
+          <div class="text-2xl font-bold text-white">${c.value}</div>
+          <div class="text-xs text-gray-400 mt-0.5">${c.label}</div>
+          <div class="text-xs text-gray-600">${c.sub}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="rounded-xl p-4" style="background:var(--surface);border:1px solid var(--border)">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">By Status</h3>
+        <div class="space-y-2.5">
+          ${Object.entries(d.byStatus || {}).map(([k, v]) => `
+            <div class="flex items-center gap-3">
+              <span class="text-sm w-16" style="${statusColor[k] || 'color:#d1d5db'}">${k}</span>
+              <div class="flex-1 rounded-full h-1.5" style="background:#374151">
+                <div class="h-1.5 rounded-full transition-all" style="${statusBarColor[k] || 'background:#6b7280'};width:${d.total ? Math.round(v/d.total*100) : 0}%"></div>
+              </div>
+              <span class="text-sm text-gray-400 w-8 text-right">${v}</span>
+            </div>`).join('') || '<div class="text-gray-600 text-sm">No data</div>'}
+        </div>
+      </div>
+
+      <div class="rounded-xl p-4" style="background:var(--surface);border:1px solid var(--border)">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">By Model</h3>
+        <div class="space-y-2.5">
+          ${Object.entries(d.byModel || {}).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k, v]) => `
+            <div class="flex items-center gap-3">
+              <span class="text-xs text-gray-400 truncate" style="width:140px;min-width:0" title="${k}">${k}</span>
+              <div class="flex-1 rounded-full h-1.5" style="background:#374151">
+                <div class="h-1.5 rounded-full transition-all" style="background:var(--primary);width:${d.total ? Math.round(v/d.total*100) : 0}%"></div>
+              </div>
+              <span class="text-sm text-gray-400 w-6 text-right">${v}</span>
+            </div>`).join('') || '<div class="text-gray-600 text-sm">No data</div>'}
+        </div>
+      </div>
+    </div>
+
+    ${sortedDays.length ? `
+    <div class="rounded-xl overflow-hidden" style="background:var(--surface);border:1px solid var(--border)">
+      <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-500">Per Day</h3>
+      </div>
+      <table class="w-full text-sm">
+        <thead><tr class="text-xs text-gray-500" style="border-bottom:1px solid var(--border)">
+          <th class="px-4 py-2.5 text-left font-medium">Date</th>
+          <th class="px-4 py-2.5 text-right font-medium">Total</th>
+          <th class="px-4 py-2.5 text-right font-medium" style="color:var(--primary)">Success</th>
+          <th class="px-4 py-2.5 text-right font-medium text-yellow-500">Quota</th>
+          <th class="px-4 py-2.5 text-right font-medium text-red-500">Error</th>
+        </tr></thead>
+        <tbody>
+          ${sortedDays.map(day => {
+            const row = d.byDay[day];
+            return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04)" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+              <td class="px-4 py-2.5 text-gray-300 font-mono text-xs">${day}</td>
+              <td class="px-4 py-2.5 text-right text-white font-semibold">${row.total}</td>
+              <td class="px-4 py-2.5 text-right" style="color:var(--primary)">${row.success || 0}</td>
+              <td class="px-4 py-2.5 text-right text-yellow-400">${row.quota || 0}</td>
+              <td class="px-4 py-2.5 text-right text-red-400">${row.error || 0}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>` : ''}
+  `;
+}
+
+// ── Quota ─────────────────────────────────────────────────────────────────────
+
+async function loadQuota() {
+  const container = document.getElementById('quotaContent');
+  container.innerHTML = '<div class="text-center text-gray-600 py-16">Loading…</div>';
+  try {
+    const r = await fetch('/quota');
+    const d = await r.json();
+    renderQuota(d);
+  } catch (err) {
+    container.innerHTML = `<div class="text-center text-red-500 py-16">Failed: ${err.message}</div>`;
+  }
+}
+
+function renderQuota(d) {
+  const container = document.getElementById('quotaContent');
+  let html = '';
+
+  if (d.agy) {
+    html += `<div class="rounded-xl overflow-hidden" style="background:var(--surface);border:1px solid var(--border)">
+      <div class="px-5 py-3 flex items-center gap-2" style="border-bottom:1px solid var(--border)">
+        <span class="badge badge-agy">AGY</span>
+        <span class="text-xs text-gray-500 font-mono">${d.agy.account || ''}</span>
+      </div>
+      <div class="p-4 space-y-4">`;
+    for (const group of (d.agy.groups || [])) {
+      for (const bucket of (group.buckets || [])) {
+        const pct = bucket.percentRemaining;
+        const resetDate = bucket.resetTime ? new Date(bucket.resetTime) : null;
+        const resetStr = resetDate ? resetDate.toLocaleString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+        const barColor = pct <= 0 ? '#ef4444' : pct <= 20 ? '#f59e0b' : '#34d399';
+        const textColor = pct <= 0 ? '#f87171' : pct <= 20 ? '#fbbf24' : '#34d399';
+        html += `<div>
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <div class="text-sm font-semibold text-white">${group.name}</div>
+              <div class="text-xs text-gray-500 mt-0.5">${group.description || ''}</div>
+            </div>
+            <span class="text-2xl font-bold ml-4 flex-shrink-0" style="color:${textColor}">${pct.toFixed(1)}%</span>
+          </div>
+          <div class="rounded-full h-2 mb-1.5" style="background:#374151">
+            <div class="h-2 rounded-full transition-all" style="background:${barColor};width:${Math.max(pct,0)}%"></div>
+          </div>
+          <div class="flex items-center justify-between text-xs text-gray-500">
+            <span>${bucket.name}</span>
+            ${resetStr ? `<span>Refreshes ${resetStr}</span>` : ''}
+          </div>
+          ${pct <= 0 ? `<div class="mt-2 text-xs rounded-lg px-3 py-2" style="background:rgba(239,68,68,0.1);color:#f87171">${bucket.description}</div>` : ''}
+        </div>`;
+      }
+    }
+    html += `</div></div>`;
+  }
+
+  if (d.claude) {
+    const c = d.claude;
+    const sessionUsed = c.sessionPercentUsed ?? 0;
+    const weeklyUsed = c.weeklyPercentUsed ?? 0;
+    const sessionRem = Math.max(100 - sessionUsed, 0);
+    const weeklyRem = Math.max(100 - weeklyUsed, 0);
+    const bar = (pct) => pct <= 10 ? '#ef4444' : pct <= 30 ? '#f59e0b' : '#f97316';
+    const txt = (pct) => pct <= 10 ? '#f87171' : pct <= 30 ? '#fbbf24' : '#fb923c';
+
+    html += `<div class="rounded-xl overflow-hidden" style="background:var(--surface);border:1px solid var(--border)">
+      <div class="px-5 py-3 flex items-center gap-2" style="border-bottom:1px solid var(--border)">
+        <span class="badge badge-claude">Claude</span>
+        <span class="text-xs text-gray-500">CLI subscription</span>
+        ${c.totalCostUsd !== null ? `<span class="ml-auto text-xs font-mono text-gray-400">$${c.totalCostUsd?.toFixed(2)} total</span>` : ''}
+      </div>
+      <div class="p-4 space-y-4">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-semibold text-white">Current Session</span>
+            <span class="text-2xl font-bold" style="color:${txt(sessionRem)}">${sessionRem.toFixed(0)}%</span>
+          </div>
+          <div class="rounded-full h-2 mb-1.5" style="background:#374151">
+            <div class="h-2 rounded-full transition-all" style="background:${bar(sessionRem)};width:${sessionRem}%"></div>
+          </div>
+          <div class="text-xs text-gray-500">${sessionUsed}% used this session</div>
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-semibold text-white">Current Week (all models)</span>
+            <span class="text-2xl font-bold" style="color:${txt(weeklyRem)}">${weeklyRem.toFixed(0)}%</span>
+          </div>
+          <div class="rounded-full h-2 mb-1.5" style="background:#374151">
+            <div class="h-2 rounded-full transition-all" style="background:${bar(weeklyRem)};width:${weeklyRem}%"></div>
+          </div>
+          <div class="text-xs text-gray-500">${weeklyUsed}% used this week</div>
+        </div>
+        ${c.weeklyFablePercentUsed !== null ? (() => { const rem = Math.max(100-(c.weeklyFablePercentUsed||0),0); return `<div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-semibold text-white">Current Week (Fable)</span>
+            <span class="text-2xl font-bold" style="color:${txt(rem)}">${rem.toFixed(0)}%</span>
+          </div>
+          <div class="rounded-full h-2 mb-1.5" style="background:#374151">
+            <div class="h-2 rounded-full" style="background:${bar(rem)};width:${rem}%"></div>
+          </div>
+          <div class="text-xs text-gray-500">${c.weeklyFablePercentUsed}% used this week</div>
+        </div>`; })() : ''}
+      </div>
+    </div>`;
+  }
+
+  if (d.errors?.agy) html += `<div class="rounded-xl p-4 text-sm" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:#f87171">AGY error: ${d.errors.agy}</div>`;
+  if (d.errors?.claude) html += `<div class="rounded-xl p-4 text-sm" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:#f87171">Claude error: ${d.errors.claude}</div>`;
+  if (!html) html = '<div class="text-center text-gray-600 py-16">No quota data available</div>';
+  container.innerHTML = html;
+}
+
+// ── Modal listeners ───────────────────────────────────────────────────────────
+
+document.getElementById('newSessionModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal('newSessionModal');
+});
+
+init();
+</script>
+</body>
+</html>
