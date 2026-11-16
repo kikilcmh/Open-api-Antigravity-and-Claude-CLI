@@ -10,8 +10,6 @@
 
 REST API wrapper untuk [AGY CLI](https://antigravity.dev) dan [Claude CLI](https://claude.ai/code)
 
-Terinspirasi dari [Waha](https://waha.devlike.pro/) · Dibuat oleh [runia.id](https://runia.id)
-
 <br/>
 
 [![Bahasa Indonesia](https://img.shields.io/badge/Bahasa_Indonesia-→-2563eb?style=for-the-badge)](https://github.com/kikilcmh/Open-api-Antigravity-and-Claude-CLI#bahasa-indonesia)
@@ -793,6 +791,5 @@ agy-openapi/
 
 <br/><br/>
 
-Made by [runia.id](https://runia.id) &nbsp;·&nbsp; Inspired by [Waha](https://waha.devlike.pro/)
 
 </div>
